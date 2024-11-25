@@ -1,28 +1,13 @@
-version: '3.7'
 services:
   front:
-    image: node:16
-    volumes:
-      - ./front-end:/app
-      - type: bind
-        source: ./front-end.sh
-        target: /app/entrypoint.sh
-    working_dir: /app
-    command: sh ./entrypoint.sh
+    build: ./front-end
     ports: 
-      - 4200:4200
+      - 81:80
     environment:
       API_URL: "http://web-mkt:3000"
 
   web-mkt:
-    image: node:16
-    volumes:
-      - ./mkt-node:/app
-      - type: bind
-        source: ./mkt-node.sh
-        target: /app/entrypoint.sh
-    working_dir: /app
-    command: sh ./entrypoint.sh
+    build: ./mkt-node
     environment: 
       SERVER_PORT: 3000
       MONGO_URL: "mongodb://mkt-usuario:mkt-senha@mongo-mkt:27017/mkt?authSource=admin"
@@ -50,25 +35,18 @@ services:
 
   web-financeiro:
     build: ./financeiro-php
-    command: sh ./entrypoint.sh
     ports:
       - 9501:9501
-    volumes:
-      - ./financeiro-php:/app
-      - type: bind
-        source: ./financeiro-php.sh
-        target: /app/entrypoint.sh
-    working_dir: /app
     depends_on:
       - rabbitmq
 
   api-gateway:
     image: nginx
     volumes:
-      - ./servicos-nginx:/etc/nginx/conf.d
+      - ./servicos-nginx:/etc/nginx/conf.d:ro,Z
     restart: always
     ports:
-      - 80:80
+      - 80:90
     depends_on:
       - web-academico
       - web-financeiro
@@ -76,13 +54,6 @@ services:
 
   consumer-academico:
     build: ./academico-php
-    volumes:
-      - ./academico-php:/app
-      - type: bind
-        source: ./academico-php.sh
-        target: /app/entrypoint.sh
-    working_dir: /app
-    command: sh ./entrypoint.sh
     depends_on:
       - rabbitmq
       - postgre-academico
@@ -117,13 +88,6 @@ services:
       APP_URL: http://web-academico:8080
       APP_ENV: local
       APP_DEBUG: "true"
-    volumes:
-      - ./academico-php-web/:/app
-      - type: bind
-        source: ./academico-php-web.sh
-        target: /app/entrypoint.sh
-    working_dir: /app
-    command: sh ./entrypoint.sh
     ports:
       - 8080:8080
     depends_on:
